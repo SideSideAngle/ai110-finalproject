@@ -1,244 +1,163 @@
-# 🎵 Music Recommender Simulation
+# Apex Music Recommender: RAG-powered music picks by Legend and vibe
 
-## Project Summary
+## Original project
 
-In this project you will build and explain a small music recommender system.
+This project extends my **Music Recommender Simulation** (Modules 1-3). The original was a content-based recommender: it loaded a hand-written 19-song CSV, compared each song to a hand-coded taste profile (favorite genre, favorite mood, target energy), and ranked songs by a points score (genre +2, mood +1, energy closeness up to +1). It printed a "Because: ..." line for every pick, but the user profile had to be written in code and genre and mood had to match exactly.
 
-Your goal is to:
+## Title and summary
 
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
+**Apex Music Recommender** lets you type *"Wraith"*, *"I just lost a ranked match and I'm so tilted"*, or *"quiet music to study"* and get songs that fit, with the reasons.
 
-Replace this paragraph with your own summary of what your version does.
+Why it matters: the original could only answer to a profile a programmer typed in, from 19 songs. Now:
 
----
+- **RAG:** a small knowledge base of Apex Legends personalities and listening situations is retrieved for every request. The retrieved text decides the target energy, mood and genres, so retrieval directly changes which songs are ranked. It is not printed next to a standard answer.
+- **Real catalog:** 2,700 real songs (25 most popular per genre) from the public Spotify Tracks dataset.
+- **Reliability layer:** guardrails, confidence scoring, an LLM-to-rules fallback, logging, unit tests and a golden-case evaluation harness.
 
-## How The System Works
+## Architecture overview
 
-This recommender is **content-based**: it compares each song's attributes to a user's taste profile and ranks songs by how well they match. It uses no listening history or other users' behavior.
+Full diagram with the human and testing checkpoints: [docs/system_diagram.md](docs/system_diagram.md).
 
-### Data
+1. **Guardrails** ([src/guardrails.py](src/guardrails.py)) clean and reject bad input.
+2. **Retriever** ([src/retriever.py](src/retriever.py)) finds the best-matching Legend or situation documents using TF-IDF. An exact Legend name scores 1.0.
+3. **Intent parser** ([src/intent_parser.py](src/intent_parser.py)) turns the request plus retrieved documents into a profile (genres, moods, energy, valence, acousticness). An LLM does this when an API key is available. Otherwise, or if the LLM errors or returns invalid JSON, a rule-based parser uses the same retrieved documents. Both outputs are validated against the catalog vocabulary.
+4. **Confidence check:** if overall confidence is below 0.35, the app asks the user to clarify instead of guessing.
+5. **Scorer** ([src/recommender.py](src/recommender.py)) is deterministic and does all the ranking, so the LLM never decides which songs win. It uses artist diversity (max 2 per artist).
+6. **Explainer** ([src/explainer.py](src/explainer.py)) writes one sentence per song grounded in the retrieved text and score reasons. A checker rejects it if it is malformed or names a Legend that was not retrieved; then a template built from the score reasons is used.
+7. **Feedback loop** ([src/main.py](src/main.py), `App.refine` in [src/pipeline.py](src/pipeline.py)): after each answer the CLI asks if it was good. A "no" asks *what was off?* and tries again, up to 3 times. The follow-up note adjusts the earlier profile (or, with an LLM, is parsed together with the original request), and songs already shown are never repeated. Every rating and note is logged.
+8. **Logging** ([src/logging_setup.py](src/logging_setup.py)): every request, fallback and error goes to `logs/app.log` and `logs/events.jsonl`.
 
-**Song** (one row of `data/songs.csv`, 19 songs):
-`id, title, artist, genre, mood, energy, tempo_bpm, valence, danceability, acousticness`
+## Setup instructions
 
-**UserProfile** (the taste profile):
-`favorite_genre, favorite_mood, target_energy`, plus `target_valence` and `target_acousticness`, which are stored but not scored in the first version.
-
-### Algorithm Recipe
-
-Every song gets a score from three rules, and a higher score means a better match:
-
-| Signal | Rule | Points |
-|---|---|---|
-| Genre | `song.genre == user.favorite_genre` | +2.0 |
-| Mood | `song.mood == user.favorite_mood` | +1.0 |
-| Energy | `1.0 - abs(song.energy - user.target_energy)` | 0.0 to +1.0 |
-
-```
-score = genre_points + mood_points + energy_points      (maximum 4.0)
-```
-
-**Why these weights**
-- Genre is worth the most because it is the strongest, most specific taste signal.
-- Mood is worth half as much because it is a vibe, not a category, and it overlaps across genres (`chill` appears in lofi and ambient).
-- Energy is continuous, so every song earns some credit. It breaks ties and keeps results sensible when no genre or mood matches.
-- Genre and mood are exact string matches, and most values appear on only one or two songs. A match is therefore a strong but rare signal.
-
-The weights are named constants (`GENRE_WEIGHT`, `MOOD_WEIGHT`, `ENERGY_WEIGHT`) in `src/recommender.py`, so the experiments below are one-line changes.
-
-### How a Song Becomes a Recommendation
-
-1. **Load**: `load_songs` reads `data/songs.csv` and turns each row into a dictionary, converting numeric fields from text to numbers.
-2. **Score**: `score_song(user_prefs, song)` applies the three rules to one song and returns `(score, reasons)`. The reasons are short strings such as `"genre match: lofi (+2.0)"`.
-3. **Rank**: `recommend_songs` scores every song, sorts by score from highest to lowest, and keeps the top `k`.
-4. **Explain**: each result is returned as `(song, score, explanation)`, and `src/main.py` prints the "Because: ..." line.
-
-The `Recommender` class (`recommend`, `explain_recommendation`) reuses `score_song`, so the class and the functions follow the same rules.
-
-**Scoring is separate from ranking.** The scoring rule judges one song in isolation. The ranking rule compares the scores and decides what the user sees. A recommender needs both.
-
-### Planned Experiments and Known Weaknesses
-
-- Try genre = 1.0 with energy weight doubled, and compare the top 5.
-- Try adding valence and acousticness closeness to the score.
-- Exact string matching means `indie pop` does not count as `pop`, and `chill` gets no partial credit for `relaxed`.
-- With only 19 songs, lower-ranked results can be weak matches that only earn energy points.
-- Genre dominance can bury a song with a great mood and energy match.
-
-### Real-World Context
-
-Real world recommendation systems combine several signals in a pipeline. Signals like plays, skips, replays, watch or listen time, saves, time of day, device, location, genre, lyrics, other users' who listen to similar songs.
-They also utilize collaborative filtering, which draws on activity and behavior from other users, and content-based filtering, which draws on the content itself. Both have their own pros and cons and requirements to get up and running.
-Lastly, they also need a scoring rule to answer "how good is this song for this user" and a ranking rule to answer "which songs do we display". Both work at different levels and a recommender needs both
-The scoring rule judges one song in isolation, the ranking rule would decide what the user sees.
-
----
-
-## Getting Started
-
-### Setup
-
-1. Create a virtual environment (optional but recommended):
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
-
-2. Install dependencies
+Requires Python 3.10+.
 
 ```bash
+# 1. Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate        # Mac/Linux
+.venv\Scripts\activate           # Windows
+
+# 2. Install dependencies
 pip install -r requirements.txt
-```
 
-3. Run the app:
+# 3. (Optional) enable the LLM. Without this the app runs fully offline.
+cp .env.example .env             # then put your ANTHROPIC_API_KEY in .env
 
-```bash
-python -m src.main
-```
+# 4. Run it (from the repo root)
+python -m src.main                         # interactive
+python -m src.main "Octane"                # one request
+python -m src.main --offline "Wraith"      # force the rule-based parser
 
-### Running Tests
-
-Run the starter tests with:
-
-```bash
+# 5. Tests and evaluation
 pytest
+python eval/run_eval.py                    # writes eval/report.md
 ```
 
-You can add more tests in `tests/test_recommender.py`.
+`data/songs.csv` is already included. To rebuild it from the source dataset: `python -m src.catalog` (downloads about 20 MB from Hugging Face; `--source path.csv` uses a local copy).
 
----
+## Sample interactions
 
-## Sample Recommendation Output
+These are real outputs from `python -m src.main --offline ...` (top 3 of 5 shown, "Because" details shortened).
 
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
-
+**1. A Legend name**
 ```
-# e.g.:
-# User profile: genre=indie, mood=chill, energy=low
-# Recommendations:
-#   1. ...
-#   2. ...
-#   3. ...
+> Wraith
+Retrieved context: Wraith (1.00)
+Parsed by fallback: {'genres': ['trip hop', 'ambient', 'industrial', 'goth'], 'moods': ['moody', 'melancholic'], 'energy': 0.5, 'valence': 0.2, 'acousticness': 0.15}
+Confidence: 0.96
+
+1. Sunsetz - Cigarettes After Sex [ambient, melancholic] score 4.90
+   Because: genre match: ambient (+2.0); mood match: melancholic (+1.0); energy 0.48 vs target 0.50 (+0.98); ... Fits the Wraith vibe.
+2. Apocalypse - Cigarettes After Sex [ambient, melancholic] score 4.89
+3. Test & Recognise - Flume Re-work - Seekae [ambient, melancholic] score 4.85
 ```
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
+**2. A free-text situation (retrieval plus keyword cues)**
+```
+> I just lost a ranked match and I'm so tilted
+Retrieved context: Tilted after a loss (0.19), Ranked grind (0.19)
+Parsed by fallback: {'genres': ['metalcore', 'hardcore', 'grunge', 'punk'], 'moods': ['angry', 'intense'], 'energy': 0.9, ...}
+Confidence: 0.70
 
----
+1. Times Like These - Foo Fighters [grunge, angry] score 4.93
+2. The Kill - Thirty Seconds To Mars [grunge, angry] score 4.92
+3. MIDDLE OF THE NIGHT - Loveless [punk, angry] score 4.92
+```
 
-## Experiments You Tried
+**3. Calm studying (the word "calm" overrides the retrieved energy)**
+```
+> calm focus music for studying
+Retrieved context: Studying or homework (0.30), Crypto (0.09)
+Parsed by fallback: {'genres': ['study', 'ambient', 'piano', 'classical'], ..., 'energy': 0.25, 'acousticness': 0.85}
+Confidence: 0.81
 
-Use this section to document the experiments you ran. For example:
+1. The Four Seasons - Winter in F Minor ... - Antonio Vivaldi [classical, relaxed] score 4.98
+2. Views from Yamashita Park - Nathan Kawanishi [study, relaxed] score 4.94
+```
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+**4. A theme the knowledge base has no document for (romance cue)**
+```
+> I want to hear something romantical
+Parsed by fallback: {'genres': ['romance', 'r&b', 'soul'], 'moods': ['relaxed', 'chill', 'happy'], 'energy': 0.4, 'valence': 0.6, 'acousticness': 0.4}
+Confidence: 0.63
 
----
+1. Листопад - Valery Obodzinsky [romance, chill] score 4.90
+2. No Suburban, Pt. 2 - Sheff G [r&b, happy] score 4.90
+3. 14 минут до старта - Я верю, друзья - Vladimir Troshin [romance, relaxed] score 4.86
+```
 
-## Limitations and Risks
+**5. Saying "no" and explaining what was off**
+```
+Were these recommendations good? [y/n/Enter to skip] n
+What was off? ... too slow, I need more energy
 
-Summarize some limitations of your recommender.
+Request: I want to hear something romantical (+ too slow, I need more energy)
+Parsed by fallback: {'energy': 0.88, 'valence': 0.6, 'acousticness': 0.4}
+1. Monalisa - Jorge Vercillo [mpb, euphoric] score 1.93
+2. Kajra Re - Shankar [classical, euphoric] score 1.92
+3. Crazy Train - Ozzy Osbourne [hard rock, intense] score 1.92
+(note: energy changed a lot, so I dropped the earlier genre and mood)
+```
+None of the first round's songs are repeated. The trade-off is visible: the new picks are energetic but no longer romantic, because the old genre would have outvoted the new energy target.
 
-Examples:
+**6. Guardrail: input that cannot be understood**
+```
+> asdf qwerty
+[!] Could not extract any usable music preferences from that request.
+```
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
+## Design decisions
 
-You will go deeper on this in your model card.
+- **Kaggle/Hugging Face CSV instead of a live music API.** It needs no key, it can't break between runs, and its columns already matched my scorer. Trade-offs: the catalog is static, it can't play audio, and the `mood` column is *derived* from valence and energy (the dataset has none). Genre labels are also noisy (for example, The Smiths appears as "punk rock").
+- **TF-IDF retrieval instead of embeddings.** Deterministic, free, no extra key. Trade-off: it matches words, not meaning, so a request with no vocabulary overlap retrieves nothing and relies on keyword cues.
+- **The LLM parses and explains, but never ranks.** The deterministic scorer ranks, so results are testable and every score is explainable. Trade-off: less "magic".
+- **Filler words are removed before retrieval.** A vague request ("I want to hear something romantical") used to retrieve an unrelated document only because both contained "want" and "music". Removing those words fixed it at the root. Themes with no document ("romantic", "breakup", "party") are covered by keyword cues instead.
+- **"No" re-runs with context and excludes shown songs**, instead of just logging. Follow-up notes only change what they mention. Trade-off: when a note moves energy a lot and names no genre, I drop the old genre and mood, so the answer can drift from the original theme (see sample 5). "more acoustic" is also read as the *genre* "acoustic".
+- **Every AI step has a non-AI fallback**, so the app and all tests run without an API key.
+- **Hand-written knowledge base.** Apex has no official public API, so I wrote 15 Legend and 8 situation descriptions at the personality level (not detailed lore, to avoid stating facts I can't verify). They are my interpretation, not official data.
+- **Simplifications:** no voice input, no audio playback, and one language.
+
+## Testing summary
+
+- **Unit and integration tests:** `pytest` gives **43 of 43 passing**, covering the scorer, normalization and clamping, bad CSV rows, guardrails, retrieval, LLM-output validation, fallback on API errors, explanation checking, follow-up refinement, and the CLI yes/no loop driven by scripted input. The LLM is replaced by fake callables in these tests.
+- **Golden-case evaluation** ([eval/report.md](eval/report.md)): **26 of 27 passed** in offline mode. Average confidence on answered requests was **0.81**, and average artist diversity in the top 5 was **0.89**. The 5 guardrail cases (empty, gibberish, over-long, prompt-injection-style text, vague) were all rejected safely, and the 3 follow-up cases never repeated a song.
+- **What failed:** the "conflicting" profile (pop + melancholic at energy 0.9) returns only 2 of 5 high-energy songs, because genre and mood points together outweigh energy. I left this case failing on purpose because it reflects a real weakness of the point weights.
+- **Bugs found by testing and by using the app, then fixed:**
+  - My own first-run test showed a romantic request retrieving the unrelated "Ranked grind" document (confidence looked fine, results were wrong). Cause: filler words. Fix: remove them, add romance cues, lower confidence for weak matches.
+  - A follow-up "too slow" retrieved the "Sad and reflective" document and replaced the user's genres. Fix: follow-ups ignore weak document matches.
+  - Removing filler words made "I just lost a ranked match and I'm so tilted" pick the wrong situation. Fix: add the words people actually use to that document.
+  - A "too slow" follow-up still returned slow songs because the old genre outvoted the new energy target. Fix: drop the old genre and mood when energy shifts a lot (with the side effect noted above).
+- **What worked:** validation (dropping unknown genres, clamping numbers) and the rule-based fallback meant bad or missing LLM output never crashed a request.
+- **Human evaluation:** the CLI logs every y/n rating and follow-up note to `logs/events.jsonl`, and the eval report summarizes them. So far there are only 3 ratings (1 positive), from my own early testing, which is too few to draw conclusions. The two "no" ratings were both for the romantic request before the fixes above.
+- **Not yet verified:** I have not run the live LLM path against the real API from the test suite (it is only covered by fake LLM replies), so I'm not reporting accuracy numbers for it.
 
 ---
 
 ## Reflection
 
-Read and complete `model_card.md`:
+*(Replace this with your own words before submitting; the points below are what I observed building it.)*
 
-[**Model Card**](model_card.md)
-
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-## Sample Recommendation Output
-Loaded songs: 19
-
-Top recommendations:
-
-Library Rain - Score: 4.00
-Because: genre match: lofi (+2.0); mood match: chill (+1.0); energy 0.35 vs target 0.35 (+1.00)
-
-Midnight Coding - Score: 3.93
-Because: genre match: lofi (+2.0); mood match: chill (+1.0); energy 0.42 vs target 0.35 (+0.93)
-
-Focus Flow - Score: 2.95
-Because: genre match: lofi (+2.0); energy 0.40 vs target 0.35 (+0.95)
-
-Spacewalk Thoughts - Score: 1.93
-Because: mood match: chill (+1.0); energy 0.28 vs target 0.35 (+0.93)
-
-Coffee Shop Stories - Score: 0.98
-Because: energy 0.37 vs target 0.35 (+0.98)
-
-
-```
-Loaded songs: 19
-
-=== High-Energy Pop: top recommendations ===
-
-Sunrise City - Score: 3.92
-Because: genre match: pop (+2.0); mood match: happy (+1.0); energy 0.82 vs target 0.90 (+0.92)
-
-Gym Hero - Score: 2.97
-Because: genre match: pop (+2.0); energy 0.93 vs target 0.90 (+0.97)
-
-Rooftop Lights - Score: 1.86
-Because: mood match: happy (+1.0); energy 0.76 vs target 0.90 (+0.86)
-
-Storm Runner - Score: 0.99
-Because: energy 0.91 vs target 0.90 (+0.99)
-
-Iron Cathedral - Score: 0.94
-Because: energy 0.96 vs target 0.90 (+0.94)
-
-
-=== Chill Lofi: top recommendations ===
-
-Library Rain - Score: 4.00
-Because: genre match: lofi (+2.0); mood match: chill (+1.0); energy 0.35 vs target 0.35 (+1.00)
-
-Midnight Coding - Score: 3.93
-Because: genre match: lofi (+2.0); mood match: chill (+1.0); energy 0.42 vs target 0.35 (+0.93)
-
-Focus Flow - Score: 2.95
-Because: genre match: lofi (+2.0); energy 0.40 vs target 0.35 (+0.95)
-
-Spacewalk Thoughts - Score: 1.93
-Because: mood match: chill (+1.0); energy 0.28 vs target 0.35 (+0.93)
-
-Coffee Shop Stories - Score: 0.98
-Because: energy 0.37 vs target 0.35 (+0.98)
-
-
-=== Deep Intense Rock: top recommendations ===
-
-Storm Runner - Score: 3.99
-Because: genre match: rock (+2.0); mood match: intense (+1.0); energy 0.91 vs target 0.92 (+0.99)
-
-Gym Hero - Score: 1.99
-Because: mood match: intense (+1.0); energy 0.93 vs target 0.92 (+0.99)
-
-Iron Cathedral - Score: 0.96
-Because: energy 0.96 vs target 0.92 (+0.96)
-
-Neon Pulse - Score: 0.95
-Because: energy 0.97 vs target 0.92 (+0.95)
-
-Sunrise City - Score: 0.90
-Because: energy 0.82 vs target 0.92 (+0.90)
-```
-
+- Putting an LLM in front of a deterministic scorer made the system far easier to trust and test than letting the LLM pick songs itself.
+- Most of the reliability work was not about the AI being smart. It was about handling what happens when it is wrong, missing, or fed odd input.
+- Evaluation cases found real weaknesses (the weights, noisy genres, the derived mood) that I would not have noticed from the happy path.
+- The knowledge base and the mood derivation are my own judgments, so the system's "taste" reflects my assumptions about what a Legend sounds like.
