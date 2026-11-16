@@ -1,3 +1,4 @@
-pandas
+scikit-learn
+anthropic
+python-dotenv
 pytest
-streamlit

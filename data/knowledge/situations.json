@@ -1,0 +1,157 @@
+[
+  {
+    "name": "Ranked grind",
+    "text": "Grinding ranked matches late at night: locked in, focused, competitive and steady. Want music that keeps concentration high without distracting, driving and rhythmic. People say: climbing rank, grinding, queueing up, ranked ladder, focused session.",
+    "music_profile": {
+      "genres": [
+        "techno",
+        "drum and bass",
+        "electronic",
+        "hip hop"
+      ],
+      "moods": [
+        "intense",
+        "moody"
+      ],
+      "energy": 0.75,
+      "valence": 0.35,
+      "acousticness": 0.05
+    }
+  },
+  {
+    "name": "Pre-drop hype",
+    "text": "Hyping up before dropping into a hot zone and the first fight. Adrenaline, pumped up, aggressive, fired up, ready to go. Loud and fast. People say: hyped, pumped, drop in, drop zone, before the match, warm up.",
+    "music_profile": {
+      "genres": [
+        "hardstyle",
+        "metal",
+        "edm",
+        "punk rock"
+      ],
+      "moods": [
+        "euphoric",
+        "angry",
+        "intense"
+      ],
+      "energy": 0.95,
+      "valence": 0.5,
+      "acousticness": 0.03
+    }
+  },
+  {
+    "name": "Winding down after a win",
+    "text": "Relaxing and celebrating after winning a match, a champion. Calm, content, satisfied and mellow, cooling off and enjoying the moment.",
+    "music_profile": {
+      "genres": [
+        "chill",
+        "soul",
+        "indie pop",
+        "r&b"
+      ],
+      "moods": [
+        "chill",
+        "happy",
+        "relaxed"
+      ],
+      "energy": 0.4,
+      "valence": 0.7,
+      "acousticness": 0.45
+    }
+  },
+  {
+    "name": "Tilted after a loss",
+    "text": "Frustrated, tilted and angry after a bad loss or getting third-partied. Venting, annoyed, mad. Needs something heavy to let the anger out, or something calm to reset. People say: I lost, losing, lose streak, tilt, tilted, salty, rage, raging, so mad.",
+    "music_profile": {
+      "genres": [
+        "metalcore",
+        "hardcore",
+        "grunge",
+        "punk"
+      ],
+      "moods": [
+        "angry",
+        "intense"
+      ],
+      "energy": 0.9,
+      "valence": 0.2,
+      "acousticness": 0.05
+    }
+  },
+  {
+    "name": "Studying or homework",
+    "text": "Studying, reading, doing homework or coding. Needs quiet, unobtrusive, calm and focused background music with little vocal distraction.",
+    "music_profile": {
+      "genres": [
+        "study",
+        "ambient",
+        "piano",
+        "classical"
+      ],
+      "moods": [
+        "peaceful",
+        "chill",
+        "relaxed"
+      ],
+      "energy": 0.2,
+      "valence": 0.4,
+      "acousticness": 0.85
+    }
+  },
+  {
+    "name": "Sad and reflective",
+    "text": "Feeling sad, lonely, heartbroken, reflective or nostalgic. Wants emotional, slow, melancholic songs to sit with the feeling.",
+    "music_profile": {
+      "genres": [
+        "sad",
+        "singer songwriter",
+        "acoustic",
+        "blues"
+      ],
+      "moods": [
+        "melancholic",
+        "relaxed"
+      ],
+      "energy": 0.3,
+      "valence": 0.15,
+      "acousticness": 0.75
+    }
+  },
+  {
+    "name": "Workout",
+    "text": "Working out at the gym, running or lifting. Needs powerful, pumping, high tempo, motivating, energetic songs.",
+    "music_profile": {
+      "genres": [
+        "hip hop",
+        "edm",
+        "hard rock",
+        "dance"
+      ],
+      "moods": [
+        "euphoric",
+        "intense"
+      ],
+      "energy": 0.9,
+      "valence": 0.6,
+      "acousticness": 0.05
+    }
+  },
+  {
+    "name": "Road trip",
+    "text": "Driving with friends on a road trip, windows down. Sing-along, carefree, happy, warm, nostalgic and upbeat.",
+    "music_profile": {
+      "genres": [
+        "rock",
+        "country",
+        "pop",
+        "indie"
+      ],
+      "moods": [
+        "happy",
+        "euphoric"
+      ],
+      "energy": 0.7,
+      "valence": 0.8,
+      "acousticness": 0.25
+    }
+  }
+]

@@ -1,0 +1,77 @@
+[
+  {
+    "name": "Wraith",
+    "text": "Wraith is a quiet, haunted, mysterious Legend. Eerie, dark and tense, she hears voices and moves between dimensions. Her vibe is ghostly, brooding, cold and cinematic, like creeping through the shadows before a fight.",
+    "music_profile": {"genres": ["trip hop", "ambient", "industrial", "goth"], "moods": ["moody", "melancholic"], "energy": 0.5, "valence": 0.2, "acousticness": 0.15}
+  },
+  {
+    "name": "Octane",
+    "text": "Octane is a reckless, hyperactive thrill seeker who loves speed and adrenaline. Fast, loud, cocky, funny and fearless, always rushing in headfirst with a grin. His vibe is chaotic party energy and pure adrenaline.",
+    "music_profile": {"genres": ["hardstyle", "drum and bass", "punk rock", "edm"], "moods": ["euphoric", "intense"], "energy": 0.95, "valence": 0.7, "acousticness": 0.05}
+  },
+  {
+    "name": "Bloodhound",
+    "text": "Bloodhound is a relentless, solemn tracker and hunter. Primal, ritualistic, focused and dark, they stalk their prey with patience and then strike. The vibe is heavy, tribal, ominous and driving.",
+    "music_profile": {"genres": ["heavy metal", "industrial", "dub", "metal"], "moods": ["intense", "angry"], "energy": 0.8, "valence": 0.25, "acousticness": 0.1}
+  },
+  {
+    "name": "Lifeline",
+    "text": "Lifeline is a warm, caring, heroic combat medic who protects the team and heals others. Hopeful, kind, optimistic and brave, she keeps morale up. The vibe is uplifting, bright and encouraging.",
+    "music_profile": {"genres": ["pop", "indie pop", "power pop", "soul"], "moods": ["happy", "euphoric"], "energy": 0.7, "valence": 0.8, "acousticness": 0.25}
+  },
+  {
+    "name": "Mirage",
+    "text": "Mirage is a charming, flashy, playful trickster and party animal who loves decoys and attention. Confident, funny, cocky and carefree. The vibe is a summer club night: groovy, bright and danceable.",
+    "music_profile": {"genres": ["dance", "disco", "funk", "house"], "moods": ["happy", "euphoric"], "energy": 0.8, "valence": 0.85, "acousticness": 0.1}
+  },
+  {
+    "name": "Pathfinder",
+    "text": "Pathfinder is a friendly, curious, upbeat robot who is always optimistic and excited to explore and make friends. Wholesome, bouncy, cheerful and naive. The vibe is bright, playful, electronic and fun.",
+    "music_profile": {"genres": ["synth pop", "j pop", "electro", "pop"], "moods": ["happy", "euphoric"], "energy": 0.7, "valence": 0.9, "acousticness": 0.1}
+  },
+  {
+    "name": "Bangalore",
+    "text": "Bangalore is a disciplined, tough professional soldier. Focused, determined, no-nonsense and loyal, she is built for sustained fights with smoke and rolling barrages. The vibe is marching, gritty, driving and militant.",
+    "music_profile": {"genres": ["hard rock", "rock", "hip hop", "grunge"], "moods": ["intense", "angry"], "energy": 0.85, "valence": 0.4, "acousticness": 0.1}
+  },
+  {
+    "name": "Caustic",
+    "text": "Caustic is a cold, calculating, menacing scientist who poisons whole areas with toxic gas. Sinister, methodical, unsettling and patient. The vibe is dark, slow-burning, industrial and creeping dread.",
+    "music_profile": {"genres": ["industrial", "dubstep", "detroit techno", "goth"], "moods": ["moody", "angry"], "energy": 0.7, "valence": 0.15, "acousticness": 0.05}
+  },
+  {
+    "name": "Gibraltar",
+    "text": "Gibraltar is a big, steady, dependable protector who shields his squad. Calm, strong, loyal and reassuring, like a big brother. The vibe is warm, steady, soulful and grounded.",
+    "music_profile": {"genres": ["soul", "blues", "gospel", "country"], "moods": ["relaxed", "happy"], "energy": 0.5, "valence": 0.6, "acousticness": 0.5}
+  },
+  {
+    "name": "Wattson",
+    "text": "Wattson is a brilliant, nervous, curious young engineer who builds electric fences and loves puzzles and science. Quirky, energetic, geeky and cheerful. The vibe is bright, electric, bubbly and nerdy.",
+    "music_profile": {"genres": ["electronic", "idm", "synth pop", "j pop"], "moods": ["happy", "euphoric"], "energy": 0.75, "valence": 0.75, "acousticness": 0.1}
+  },
+  {
+    "name": "Crypto",
+    "text": "Crypto is a quiet, secretive, paranoid hacker who works behind screens with drones. Cold, analytical, patient and tense. The vibe is nighttime focus: pulsing, minimal, dark and cerebral.",
+    "music_profile": {"genres": ["minimal techno", "techno", "detroit techno", "idm"], "moods": ["moody", "relaxed"], "energy": 0.6, "valence": 0.3, "acousticness": 0.05}
+  },
+  {
+    "name": "Revenant",
+    "text": "Revenant is a merciless, nihilistic, robotic killer who relishes the hunt and mocks his victims. Cruel, apocalyptic, dark and relentless. The vibe is brutal, hateful and heavy.",
+    "music_profile": {"genres": ["death metal", "black metal", "metalcore", "grindcore"], "moods": ["angry", "intense"], "energy": 0.95, "valence": 0.1, "acousticness": 0.02}
+  },
+  {
+    "name": "Loba",
+    "text": "Loba is a stylish, glamorous, cunning thief who teleports and steals loot. Smooth, confident, seductive, wealthy and sly. The vibe is sleek, sultry, expensive and sophisticated.",
+    "music_profile": {"genres": ["r&b", "trip hop", "jazz", "latin"], "moods": ["moody", "relaxed"], "energy": 0.55, "valence": 0.5, "acousticness": 0.3}
+  },
+  {
+    "name": "Horizon",
+    "text": "Horizon is a dreamy, thoughtful, wondering scientist and astronaut who is fascinated by space and time. Hopeful, curious and gentle, with a sense of awe. The vibe is cosmic, floating, spacey and emotional.",
+    "music_profile": {"genres": ["ambient", "new age", "progressive house", "trance"], "moods": ["peaceful", "chill"], "energy": 0.45, "valence": 0.55, "acousticness": 0.3}
+  },
+  {
+    "name": "Fuse",
+    "text": "Fuse is a loud, explosive, boisterous mercenary who loves blowing things up and fighting for fun. Rowdy, laughing, brash and fearless. The vibe is rowdy, fist-pumping, gritty and rebellious.",
+    "music_profile": {"genres": ["punk", "rock n roll", "hard rock", "country"], "moods": ["euphoric", "intense"], "energy": 0.9, "valence": 0.6, "acousticness": 0.1}
+  }
+]
