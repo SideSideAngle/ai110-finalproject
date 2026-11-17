@@ -24,6 +24,8 @@ flowchart TD
     X --> CK{Check: right count, short, only retrieved Legends named?}
     CK -->|fail| TX[Template explanation from the score reasons]
     CK -->|pass| O([Recommendations + confidence])
+    O -.->|song title and artist only| PV[Preview lookup: iTunes Search API, cached, parallel]
+    PV -.->|match: 30s player + album art. No match or error: YouTube link only| O
     TX --> O
     O --> H2[/Human: thumbs up or down in the CLI, peer review/]
     H2 -->|"no: what was off? (max 3 rounds, shown songs excluded)"| P
@@ -55,5 +57,6 @@ flowchart TD
 | Golden-case evaluation | automated test | regressions in end-to-end behavior |
 | Thumbs up/down, peer review | human | relevance problems no automatic check can see |
 | Pasted API key check | automatic | one tiny test call; a bad key is reported at once and the app stays in offline mode |
+| Preview matching | automatic | wrong artist or song, non-Apple URLs, timeouts and bad JSON all fall back to the YouTube link |
 | Hosted-log privacy | automatic | the web app redacts what visitors type (`LOG_REQUEST_TEXT=0`) |
 | "What was off?" follow-up | human, then automatic | a "no" re-runs the request with the user's note and never repeats shown songs |
