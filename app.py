@@ -15,6 +15,8 @@ from src.llm import make_llm, validate_llm  # noqa: E402
 from src.logging_setup import log_event, setup_logging  # noqa: E402
 from src.pipeline import App, Result  # noqa: E402
 from src.previews import get_previews  # noqa: E402
+from src.player import (PLAYER_HEIGHT, art_placeholder_html, match_bar,  # noqa: E402
+                        match_chip, player_html)
 from src.ui_helpers import (genre_chip, match_percent, mood_chip, song_header,  # noqa: E402
                             youtube_search_url)
 
@@ -114,7 +116,7 @@ with st.sidebar:
 # --------------------------------------------------------------------- page
 # The title is a button (styled to look like a heading) so clicking it returns home
 # without a page reload, which would throw away the visitor's session and API key.
-st.button("🎼 SymphonySearch", key="home", type="tertiary", on_click=go_home,
+st.button("SymphonySearch", key="home", type="tertiary", icon="🎼", on_click=go_home,
           help="Back to the start")
 st.markdown(f'<p class="hero-sub">Describe a vibe or pick a Legend, and find music that fits. '
             f'{len(base.songs):,} songs · {len(base.kb.docs)} knowledge documents</p>',
@@ -159,26 +161,33 @@ if result is not None:
             previews = get_previews([song for song, _, _ in result.recs])  # cached, parallel
         for i, (song, score, reasons) in enumerate(result.recs):
             preview = previews.get(song["id"])
+            pct = match_percent(score, result.max_score)
+            youtube = youtube_search_url(song["title"], song["artist"])
+            # Compact card: art + play button on the left; name, artist, genre, mood and
+            # match on the right. Everything else is tucked into the "Details" expander.
             with st.container(border=True):
-                if preview and preview.artwork_url:
-                    art_col, body = st.columns([1, 6], vertical_alignment="center")
-                    art_col.image(preview.artwork_url, width=96)
-                else:
-                    body = st.container()
-                with body:
-                    st.markdown(song_header(i + 1, song["title"], song["artist"]), unsafe_allow_html=True)
-                    st.markdown(genre_chip(song["genre"]) + mood_chip(song["mood"]), unsafe_allow_html=True)
-                    pct = match_percent(score, result.max_score)
-                    st.progress(pct, text=f"{pct}% match")
-                    if i < len(result.explanations):
-                        st.write(result.explanations[i])
+                art_col, info_col = st.columns([1, 4], vertical_alignment="center")
+                with art_col:
                     if preview:
-                        st.audio(preview.audio_url)
-                        st.caption("30-second preview via Apple Music")
-                    with st.expander("Score breakdown"):
+                        st.iframe(player_html(preview.audio_url, preview.artwork_url),
+                                  height=PLAYER_HEIGHT)
+                    else:
+                        st.markdown(art_placeholder_html(), unsafe_allow_html=True)
+                with info_col:
+                    st.markdown(song_header(i + 1, song["title"], song["artist"]), unsafe_allow_html=True)
+                    st.markdown(genre_chip(song["genre"]) + mood_chip(song["mood"]) + match_chip(pct),
+                                unsafe_allow_html=True)
+                    st.markdown(match_bar(pct), unsafe_allow_html=True)
+                    if not preview:  # no preview: keep a way to listen visible
+                        st.link_button("Listen on YouTube", youtube)
+                    with st.expander("Details"):
+                        if i < len(result.explanations):
+                            st.write(result.explanations[i])
+                        st.caption("Score breakdown")
                         for piece in reasons.split("; "):
                             st.write(f"- {piece}")
-                    st.link_button("Listen on YouTube", youtube_search_url(song["title"], song["artist"]))
+                        if preview:
+                            st.link_button("Listen on YouTube", youtube)
 
         with st.expander("Why these songs? (how the AI got here)"):
             st.write(f"**Parsed by:** {result.intent.source} · **Confidence:** {result.confidence:.2f} · "

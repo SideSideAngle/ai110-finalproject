@@ -107,13 +107,13 @@ def test_clicking_the_title_returns_to_the_start_and_keeps_the_key():
     assert at.session_state["llm"] is not None  # the key survived
 
 
-def test_cards_show_audio_players_when_previews_are_found(monkeypatch):
+def test_cards_show_custom_players_when_previews_are_found(monkeypatch):
     from src import previews
     monkeypatch.setenv("SYMPHONY_PREVIEWS", "1")
     previews.clear_cache()
     monkeypatch.setattr(previews, "_http_get_json", lambda url: {"results": []})  # nothing found
     at = search(fresh(), "Wraith")
-    assert not at.exception and len(card_titles(at)) == 5 and len(at.get("audio")) == 0
+    assert not at.exception and len(card_titles(at)) == 5 and len(at.get("iframe")) == 0  # no preview found: no player
 
     previews.clear_cache()
 
@@ -126,5 +126,7 @@ def test_cards_show_audio_players_when_previews_are_found(monkeypatch):
 
     monkeypatch.setattr(previews, "_http_get_json", fake)
     at = search(fresh(), "Wraith")
-    assert not at.exception and len(at.get("audio")) >= 1
+    players = at.get("iframe")
+    assert not at.exception and len(players) == 5
+    assert "audio-ssl.itunes.apple.com/p.m4a" in players[0].proto.srcdoc  # the custom player HTML
     previews.clear_cache()
