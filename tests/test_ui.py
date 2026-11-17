@@ -105,3 +105,26 @@ def test_clicking_the_title_returns_to_the_start_and_keeps_the_key():
     assert not at.exception and not card_titles(at)  # back to the welcome state
     assert any("romantic" in b.label for b in at.button)
     assert at.session_state["llm"] is not None  # the key survived
+
+
+def test_cards_show_audio_players_when_previews_are_found(monkeypatch):
+    from src import previews
+    monkeypatch.setenv("SYMPHONY_PREVIEWS", "1")
+    previews.clear_cache()
+    monkeypatch.setattr(previews, "_http_get_json", lambda url: {"results": []})  # nothing found
+    at = search(fresh(), "Wraith")
+    assert not at.exception and len(card_titles(at)) == 5 and len(at.get("audio")) == 0
+
+    previews.clear_cache()
+
+    def fake(url):  # a match for whatever song is searched
+        import urllib.parse
+        term = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)["term"][0]
+        return {"results": [{"trackName": term, "artistName": term, "previewUrl":
+                             "https://audio-ssl.itunes.apple.com/p.m4a", "artworkUrl100":
+                             "https://is1-ssl.mzstatic.com/a/100x100bb.jpg"}]}
+
+    monkeypatch.setattr(previews, "_http_get_json", fake)
+    at = search(fresh(), "Wraith")
+    assert not at.exception and len(at.get("audio")) >= 1
+    previews.clear_cache()

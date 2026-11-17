@@ -14,6 +14,7 @@ import streamlit as st  # noqa: E402
 from src.llm import make_llm, validate_llm  # noqa: E402
 from src.logging_setup import log_event, setup_logging  # noqa: E402
 from src.pipeline import App, Result  # noqa: E402
+from src.previews import get_previews  # noqa: E402
 from src.ui_helpers import (genre_chip, match_percent, mood_chip, song_header,  # noqa: E402
                             youtube_search_url)
 
@@ -154,18 +155,30 @@ if result is not None:
     else:
         if result.refinement:
             st.info(f"Try {result.refinement} of {MAX_ROUNDS}: {result.request}")
+        with st.spinner("Loading previews..."):
+            previews = get_previews([song for song, _, _ in result.recs])  # cached, parallel
         for i, (song, score, reasons) in enumerate(result.recs):
+            preview = previews.get(song["id"])
             with st.container(border=True):
-                st.markdown(song_header(i + 1, song["title"], song["artist"]), unsafe_allow_html=True)
-                st.markdown(genre_chip(song["genre"]) + mood_chip(song["mood"]), unsafe_allow_html=True)
-                pct = match_percent(score, result.max_score)
-                st.progress(pct, text=f"{pct}% match")
-                if i < len(result.explanations):
-                    st.write(result.explanations[i])
-                with st.expander("Score breakdown"):
-                    for piece in reasons.split("; "):
-                        st.write(f"- {piece}")
-                st.link_button("Listen on YouTube", youtube_search_url(song["title"], song["artist"]))
+                if preview and preview.artwork_url:
+                    art_col, body = st.columns([1, 6], vertical_alignment="center")
+                    art_col.image(preview.artwork_url, width=96)
+                else:
+                    body = st.container()
+                with body:
+                    st.markdown(song_header(i + 1, song["title"], song["artist"]), unsafe_allow_html=True)
+                    st.markdown(genre_chip(song["genre"]) + mood_chip(song["mood"]), unsafe_allow_html=True)
+                    pct = match_percent(score, result.max_score)
+                    st.progress(pct, text=f"{pct}% match")
+                    if i < len(result.explanations):
+                        st.write(result.explanations[i])
+                    if preview:
+                        st.audio(preview.audio_url)
+                        st.caption("30-second preview via Apple Music")
+                    with st.expander("Score breakdown"):
+                        for piece in reasons.split("; "):
+                            st.write(f"- {piece}")
+                    st.link_button("Listen on YouTube", youtube_search_url(song["title"], song["artist"]))
 
         with st.expander("Why these songs? (how the AI got here)"):
             st.write(f"**Parsed by:** {result.intent.source} · **Confidence:** {result.confidence:.2f} · "
