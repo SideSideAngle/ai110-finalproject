@@ -1,9 +1,10 @@
-"""Web interface for the SymphonySearch.  Run with:  streamlit run app.py
+"""Web interface for SymphonySearch.  Run with:  streamlit run app.py
 
 Streamlit reruns this whole script on every click, so anything that must survive
 between clicks (the current result, the user's key) lives in st.session_state.
 """
 import os
+from pathlib import Path
 
 # The web app does not store what visitors type. Set LOG_REQUEST_TEXT=1 to override.
 os.environ.setdefault("LOG_REQUEST_TEXT", "0")
@@ -13,12 +14,21 @@ import streamlit as st  # noqa: E402
 from src.llm import make_llm, validate_llm  # noqa: E402
 from src.logging_setup import log_event, setup_logging  # noqa: E402
 from src.pipeline import App, Result  # noqa: E402
-from src.ui_helpers import match_percent, youtube_search_url  # noqa: E402
+from src.ui_helpers import (genre_chip, match_percent, mood_chip, song_header,  # noqa: E402
+                            youtube_search_url)
 
 MAX_ROUNDS = 3  # how many "try again" rounds a visitor gets per search
+STYLE_CSS = Path(__file__).parent / "assets" / "style.css"
+EXAMPLES = ("calm focus music for studying", "I just lost a ranked match and I'm so tilted",
+            "something romantic for a date night")
 
 # Must be the first Streamlit call in the script.
 st.set_page_config(page_title="SymphonySearch", page_icon="🎼", layout="wide")
+
+try:  # styling is a nicety: if the file is missing the app still works, just plainer
+    st.markdown(f"<style>{STYLE_CSS.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+except OSError:
+    pass
 
 
 @st.cache_resource
@@ -40,7 +50,8 @@ app = App(base.songs, base.kb, ss.llm)
 
 # ---------------------------------------------------------------- callbacks
 def run_search(text: str) -> None:
-    ss.result = app.recommend(text)
+    with st.spinner("Finding your sound..."):
+        ss.result = app.recommend(text)
     ss.rated, ss.asking_note = False, False
 
 
@@ -94,28 +105,32 @@ with st.sidebar:
 
 # --------------------------------------------------------------------- page
 st.title("🎼 SymphonySearch")
-st.caption(f"{len(base.songs):,} songs · {len(base.kb.docs)} knowledge documents · "
-           "pick a Legend or describe a vibe")
+st.markdown(f'<p class="hero-sub">Describe a vibe or pick a Legend, and find music that fits. '
+            f'{len(base.songs):,} songs · {len(base.kb.docs)} knowledge documents</p>',
+            unsafe_allow_html=True)
 
-with st.expander("Quick start: pick a Legend or a situation", expanded=True):
-    for label, names in (("Legends", base.kb.legend_names),
-                         ("Situations", [d.name for d in base.kb.docs if d.kind == "situation"])):
-        st.caption(label)
-        cols = st.columns(5)
-        for i, name in enumerate(names):
-            cols[i % 5].button(name, key=f"quick_{name}", on_click=queue_search, args=(name,))
-
-# A form groups widgets so nothing reruns until submit. Enter in the box also submits.
-with st.form("search"):
-    request = st.text_input("What do you want to hear?",
-                            placeholder="A Legend like Wraith, or a vibe like 'calm focus music'")
-    submitted = st.form_submit_button("Find music")
+# The search box is the star of the page: top and centered (middle column of three).
+_, centre, _ = st.columns([1, 3, 1])
+with centre:
+    # A form groups widgets so nothing reruns until submit. Enter in the box also submits.
+    with st.form("search"):
+        request = st.text_input("What do you want to hear?", label_visibility="collapsed",
+                                placeholder="A Legend like Wraith, or a vibe like 'calm focus music'")
+        submitted = st.form_submit_button("Find music", use_container_width=True)
 
 if submitted:
     run_search(request)
 elif ss.pending:
     text, ss.pending = ss.pending, None
     run_search(text)
+
+with st.expander("Quick start: pick a Legend or a situation", expanded=ss.result is None):
+    for label, names in (("Legends", base.kb.legend_names),
+                         ("Situations", [d.name for d in base.kb.docs if d.kind == "situation"])):
+        st.caption(label)
+        cols = st.columns(5)
+        for i, name in enumerate(names):
+            cols[i % 5].button(name, key=f"quick_{name}", on_click=queue_search, args=(name,))
 
 # ------------------------------------------------------------------ results
 result: Result = ss.result
@@ -129,8 +144,8 @@ if result is not None:
             st.info(f"Try {result.refinement} of {MAX_ROUNDS}: {result.request}")
         for i, (song, score, reasons) in enumerate(result.recs):
             with st.container(border=True):
-                st.markdown(f"**{song['title']}** by *{song['artist']}*")
-                st.caption(f"{song['genre'].title()} · {song['mood'].title()}")
+                st.markdown(song_header(i + 1, song["title"], song["artist"]), unsafe_allow_html=True)
+                st.markdown(genre_chip(song["genre"]) + mood_chip(song["mood"]), unsafe_allow_html=True)
                 pct = match_percent(score, result.max_score)
                 st.progress(pct, text=f"{pct}% match")
                 if i < len(result.explanations):
@@ -170,3 +185,16 @@ if result is not None:
                 st.text_input("What was off?", key="note_input",
                               placeholder="e.g. too slow, more acoustic, try rock (or leave blank for new songs)")
                 st.form_submit_button("Try again", on_click=retry_with_note, args=(app,))
+else:
+    # Welcome state: nothing searched yet, so show how it works and one-click examples.
+    st.write("")
+    steps = st.columns(3)
+    for col, (title, body) in zip(steps, (
+            ("1. Say what you want", "Name a Legend, a situation, or just describe a mood."),
+            ("2. We look it up", "Matching notes are retrieved from our knowledge base to shape the search."),
+            ("3. Get music, with reasons", "Every song comes with a match score and a plain explanation."))):
+        col.markdown(f'<div class="welcome-step"><b>{title}</b><br>{body}</div>', unsafe_allow_html=True)
+    st.caption("Or try one of these:")
+    example_cols = st.columns(len(EXAMPLES))
+    for col, example in zip(example_cols, EXAMPLES):
+        col.button(example, key=f"example_{example}", on_click=queue_search, args=(example,))

@@ -29,3 +29,19 @@ def test_pipeline_reports_max_score_for_percentages():
     result = app.recommend("Wraith", use_llm=False)
     assert result.max_score > 0
     assert all(match_percent(score, result.max_score) <= 100 for _, score, _ in result.recs)
+
+
+def test_chips_escape_html_from_the_dataset():
+    from src.ui_helpers import genre_chip, mood_chip, song_header
+    chip = genre_chip("<script>alert(1)</script>").lower()
+    assert "<script>" not in chip
+    assert "&lt;script&gt;" in chip  # shown as text, never run as HTML
+    assert "<b>" not in song_header(1, "<b>Hi</b>", "A&B")
+    assert "A&amp;B" in song_header(1, "T", "A&B")
+    assert "Euphoric" in mood_chip("euphoric")
+
+
+def test_mood_colors_have_a_safe_default():
+    from src.ui_helpers import DEFAULT_MOOD_COLOR, mood_color
+    assert mood_color("Euphoric") == mood_color("euphoric") != DEFAULT_MOOD_COLOR
+    assert mood_color("not-a-mood") == DEFAULT_MOOD_COLOR

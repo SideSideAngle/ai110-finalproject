@@ -1,6 +1,7 @@
 """Smoke tests for the Streamlit app, driven headlessly with streamlit.testing."""
 import json
 import os
+import re
 
 import pytest
 from streamlit.testing.v1 import AppTest
@@ -10,6 +11,11 @@ from src.logging_setup import LOG_DIR, log_event
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP = os.path.join(ROOT, "app.py")
+
+
+def card_titles(at: AppTest) -> list:
+    """Song titles currently shown on the cards (read from the rank/title header HTML)."""
+    return [t for e in at.markdown for t in re.findall(r'class="song-title">(.*?)</span>', e.value)]
 
 
 def fresh() -> AppTest:
@@ -46,12 +52,13 @@ def test_quick_start_button_runs_a_search():
 
 def test_thumbs_down_then_retry_shows_new_songs():
     at = search(fresh(), "calm study music")
-    first = [e.value for e in at.markdown if "** by *" in e.value]
+    first = card_titles(at)
+    assert len(first) == 5
     next(b for b in at.button if "Not quite" in b.label).click().run()
     at.text_input(key="note_input").set_value("too slow, more energy")
     next(b for b in at.button if b.label == "Try again").click().run()
     assert not at.exception
-    second = [e.value for e in at.markdown if "** by *" in e.value]
+    second = card_titles(at)
     assert second and not set(first) & set(second)
 
 
@@ -76,3 +83,15 @@ def test_request_text_is_redacted_when_logging_is_private(monkeypatch):
         last = json.loads(f.readlines()[-1])
     assert last["request"] == "[redacted]" and last["note"] == "[redacted]"
     assert last["confidence"] == 0.5  # non-sensitive fields are kept
+
+
+def test_welcome_state_shows_examples_before_any_search():
+    at = fresh()
+    assert not at.exception and not card_titles(at)
+    assert any("romantic" in b.label for b in at.button)  # one-click example searches
+
+
+def test_example_button_runs_a_search():
+    at = fresh()
+    next(b for b in at.button if "romantic" in b.label).click().run()
+    assert not at.exception and len(card_titles(at)) == 5
