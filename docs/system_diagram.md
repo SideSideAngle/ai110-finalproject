@@ -4,6 +4,7 @@ Rectangles with slanted sides (`[/ /]`) are **human checkpoints**. The `Testing`
 
 ```mermaid
 flowchart TD
+    UI[/"Web app (Streamlit) or CLI: text box, Legend buttons, optional pasted API key"/] --> U
     U([User: free text or a Legend name]) --> G[Guardrails: sanitize, length and empty checks]
     G -->|invalid| ERR[Friendly error + log]
     G --> R[Retriever: TF-IDF over Legend and situation docs]
@@ -53,4 +54,6 @@ flowchart TD
 | Explanation check | automatic | wrong count, oversized text, or a Legend that was never retrieved |
 | Golden-case evaluation | automated test | regressions in end-to-end behavior |
 | Thumbs up/down, peer review | human | relevance problems no automatic check can see |
+| Pasted API key check | automatic | one tiny test call; a bad key is reported at once and the app stays in offline mode |
+| Hosted-log privacy | automatic | the web app redacts what visitors type (`LOG_REQUEST_TEXT=0`) |
 | "What was off?" follow-up | human, then automatic | a "no" re-runs the request with the user's note and never repeats shown songs |

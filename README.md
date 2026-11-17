@@ -43,7 +43,10 @@ pip install -r requirements.txt
 # 3. (Optional) enable the LLM. Without this the app runs fully offline.
 cp .env.example .env             # then put your ANTHROPIC_API_KEY in .env
 
-# 4. Run it (from the repo root)
+# 4a. Web app (recommended)
+streamlit run app.py                       # opens http://localhost:8501
+
+# 4b. or the command line (from the repo root)
 python -m src.main                         # interactive
 python -m src.main "Octane"                # one request
 python -m src.main --offline "Wraith"      # force the rule-based parser
@@ -54,6 +57,19 @@ python eval/run_eval.py                    # writes eval/report.md
 ```
 
 `data/songs.csv` is already included. To rebuild it from the source dataset: `python -m src.catalog` (downloads about 20 MB from Hugging Face; `--source path.csv` uses a local copy).
+
+### Using the web app
+
+- Pick a **Legend** or **situation** button, or type a request and press Enter or **Find music**.
+- Each song card shows a % match, a short explanation, a collapsible score breakdown, and a YouTube search link.
+- **Why these songs?** shows what was retrieved from the knowledge base, the parsed profile, and the confidence.
+- 👎 **Not quite** asks what was off and tries again (up to 3 times, never repeating songs). 👍 logs a positive rating.
+- **Your own API key (optional):** paste an Anthropic key in the sidebar to switch from the offline rule-based parser to the LLM. The key is checked with one tiny call, kept only in your browser session's memory, and never written to disk or logs. Without a key everything still works offline.
+- **Privacy:** the web app does not store what you type (`LOG_REQUEST_TEXT=0` by default); it logs only ratings, confidence and parser info. Set `LOG_REQUEST_TEXT=1` to log text locally.
+
+### Deploying (Streamlit Community Cloud)
+
+Push this branch to GitHub, then at share.streamlit.io choose the repo, the branch, and `app.py` as the main file. No secrets are needed because visitors bring their own key.
 
 ## Sample interactions
 
@@ -139,7 +155,7 @@ None of the first round's songs are repeated. The trade-off is visible: the new 
 
 ## Testing summary
 
-- **Unit and integration tests:** `pytest` gives **43 of 43 passing**, covering the scorer, normalization and clamping, bad CSV rows, guardrails, retrieval, LLM-output validation, fallback on API errors, explanation checking, follow-up refinement, and the CLI yes/no loop driven by scripted input. The LLM is replaced by fake callables in these tests.
+- **Unit and integration tests:** `pytest` gives **56 of 56 passing**, covering the scorer, normalization and clamping, bad CSV rows, guardrails, retrieval, LLM-output validation, fallback on API errors, explanation checking, follow-up refinement, the CLI yes/no loop driven by scripted input, and the web app driven headlessly with Streamlit's `AppTest` (search, error state, quick-start buttons, thumbs-down retry, key validation, log redaction). The LLM is replaced by fake callables in these tests.
 - **Golden-case evaluation** ([eval/report.md](eval/report.md)): **26 of 27 passed** in offline mode. Average confidence on answered requests was **0.81**, and average artist diversity in the top 5 was **0.89**. The 5 guardrail cases (empty, gibberish, over-long, prompt-injection-style text, vague) were all rejected safely, and the 3 follow-up cases never repeated a song.
 - **What failed:** the "conflicting" profile (pop + melancholic at energy 0.9) returns only 2 of 5 high-energy songs, because genre and mood points together outweigh energy. I left this case failing on purpose because it reflects a real weakness of the point weights.
 - **Bugs found by testing and by using the app, then fixed:**
@@ -148,7 +164,7 @@ None of the first round's songs are repeated. The trade-off is visible: the new 
   - Removing filler words made "I just lost a ranked match and I'm so tilted" pick the wrong situation. Fix: add the words people actually use to that document.
   - A "too slow" follow-up still returned slow songs because the old genre outvoted the new energy target. Fix: drop the old genre and mood when energy shifts a lot (with the side effect noted above).
 - **What worked:** validation (dropping unknown genres, clamping numbers) and the rule-based fallback meant bad or missing LLM output never crashed a request.
-- **Human evaluation:** the CLI logs every y/n rating and follow-up note to `logs/events.jsonl`, and the eval report summarizes them. So far there are only 3 ratings (1 positive), from my own early testing, which is too few to draw conclusions. The two "no" ratings were both for the romantic request before the fixes above.
+- **Human evaluation:** the CLI logs every y/n rating and follow-up note to `logs/events.jsonl`, and the eval report summarizes them. So far there are only 5 ratings (2 positive), all from my own testing, which is too few to draw conclusions. Several of the early "no" ratings were for the romantic request before the fixes above.
 - **Not yet verified:** I have not run the live LLM path against the real API from the test suite (it is only covered by fake LLM replies), so I'm not reporting accuracy numbers for it.
 
 ---

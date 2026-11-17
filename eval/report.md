@@ -4,7 +4,7 @@
 - **26 of 27 golden cases passed**
 - Average confidence on answered text requests: 0.81
 - Average artist diversity in the top 5 (distinct artists / songs): 0.89
-- Human feedback from logs/events.jsonl: 1 of 3 user ratings were positive
+- Human feedback from logs/events.jsonl: 2 of 5 user ratings were positive
 
 | Case | Kind | Result | Confidence | Notes |
 |---|---|---|---|---|
