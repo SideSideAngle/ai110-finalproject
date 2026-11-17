@@ -127,7 +127,7 @@ with centre:
         request = st.text_input("What do you want to hear?", key="search_text",
                                 label_visibility="collapsed",
                                 placeholder="A Legend like Wraith, or a vibe like 'calm focus music'")
-        submitted = st.form_submit_button("Find music")
+        submitted = st.form_submit_button("Find music", width="stretch")
 
 if submitted:
     run_search(request)
@@ -141,7 +141,8 @@ with st.expander("Quick start: pick a Legend or a situation", expanded=ss.result
         st.caption(label)
         cols = st.columns(5)
         for i, name in enumerate(names):
-            cols[i % 5].button(name, key=f"quick_{name}", on_click=queue_search, args=(name,))
+            cols[i % 5].button(name, key=f"quick_{name}", on_click=queue_search, args=(name,),
+                                 width="stretch")
 
 # ------------------------------------------------------------------ results
 result: Result = ss.result
@@ -208,4 +209,5 @@ else:
     st.caption("Or try one of these:")
     example_cols = st.columns(len(EXAMPLES))
     for col, example in zip(example_cols, EXAMPLES):
-        col.button(example, key=f"example_{example}", on_click=queue_search, args=(example,))
+        col.button(example, key=f"example_{example}", on_click=queue_search, args=(example,),
+                   width="stretch")

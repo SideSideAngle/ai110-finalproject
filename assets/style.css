@@ -56,7 +56,6 @@
 .welcome-step { text-align: center; color: #B9B3D9; padding: 0.6rem; }
 .welcome-step b { color: #F4F1FF; }
 
-/* Aligned button grids: every quick-start and example button fills its column equally */
-[class*="st-key-quick_"] button, [class*="st-key-example_"] button,
-.stFormSubmitButton > button { width: 100%; }
+/* Example buttons: equal height so wrapped text does not make the row uneven
+   (width comes from width="stretch" in app.py) */
 [class*="st-key-example_"] button { min-height: 4.5rem; white-space: normal; line-height: 1.3; }
