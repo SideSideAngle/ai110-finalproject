@@ -29,8 +29,17 @@ def setup_logging(level: int = logging.INFO) -> None:
     _configured = True
 
 
+REDACTED_FIELDS = ("request", "note")
+
+
 def log_event(kind: str, **fields) -> None:
-    """Append one JSON line (request, fallback, feedback, ...) to logs/events.jsonl."""
+    """Append one JSON line (request, fallback, feedback, ...) to logs/events.jsonl.
+
+    With LOG_REQUEST_TEXT=0 (the web app's default) what users typed is replaced by
+    "[redacted]", so a hosted site does not store visitors' text.
+    """
+    if os.environ.get("LOG_REQUEST_TEXT", "1") == "0":
+        fields = {k: ("[redacted]" if k in REDACTED_FIELDS else v) for k, v in fields.items()}
     try:
         os.makedirs(LOG_DIR, exist_ok=True)
         record = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "kind": kind, **fields}

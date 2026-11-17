@@ -29,6 +29,7 @@ class Result:
     explanations: List[str] = field(default_factory=list)
     explanation_method: str = "template"
     confidence: float = 0.0
+    max_score: float = 0.0  # best score any song could earn for this profile (for % match)
     needs_clarification: bool = False
     error: Optional[str] = None
     warnings: List[str] = field(default_factory=list)
@@ -119,6 +120,7 @@ class App:
 
             clean_prefs, pref_warnings = normalize_prefs(result.intent.profile)
             result.warnings.extend(pref_warnings)
+            result.max_score = max_possible_score(clean_prefs)
             result.recs = recommend_songs(result.intent.profile, self.songs, k=k,
                                           exclude_ids=result.shown_ids)
             result.shown_ids |= {song["id"] for song, _, _ in result.recs}
