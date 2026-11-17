@@ -59,6 +59,13 @@ def queue_search(text: str) -> None:
     ss.pending = text
 
 
+def go_home() -> None:
+    """Back to the starting page. Keeps the visitor's API key (it lives in ss.llm)."""
+    ss.result, ss.pending = None, None
+    ss.rated, ss.asking_note = False, False
+    ss["search_text"] = ""
+
+
 def rate_good(result: Result) -> None:
     log_event("feedback", request=result.request, helpful=True,
               confidence=result.confidence, refinement=result.refinement)
@@ -104,7 +111,10 @@ with st.sidebar:
                "to disk or written to the logs.")
 
 # --------------------------------------------------------------------- page
-st.title("🎼 SymphonySearch")
+# The title is a button (styled to look like a heading) so clicking it returns home
+# without a page reload, which would throw away the visitor's session and API key.
+st.button("🎼 SymphonySearch", key="home", type="tertiary", on_click=go_home,
+          help="Back to the start")
 st.markdown(f'<p class="hero-sub">Describe a vibe or pick a Legend, and find music that fits. '
             f'{len(base.songs):,} songs · {len(base.kb.docs)} knowledge documents</p>',
             unsafe_allow_html=True)
@@ -114,9 +124,10 @@ _, centre, _ = st.columns([1, 3, 1])
 with centre:
     # A form groups widgets so nothing reruns until submit. Enter in the box also submits.
     with st.form("search"):
-        request = st.text_input("What do you want to hear?", label_visibility="collapsed",
+        request = st.text_input("What do you want to hear?", key="search_text",
+                                label_visibility="collapsed",
                                 placeholder="A Legend like Wraith, or a vibe like 'calm focus music'")
-        submitted = st.form_submit_button("Find music", use_container_width=True)
+        submitted = st.form_submit_button("Find music")
 
 if submitted:
     run_search(request)

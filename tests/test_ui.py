@@ -30,7 +30,7 @@ def search(at: AppTest, text: str) -> AppTest:
 def test_app_loads_without_errors():
     at = fresh()
     assert not at.exception
-    assert at.title[0].value.endswith("SymphonySearch")
+    assert any(b.label.endswith("SymphonySearch") for b in at.button)  # the clickable title
 
 
 def test_search_shows_five_song_cards():
@@ -95,3 +95,13 @@ def test_example_button_runs_a_search():
     at = fresh()
     next(b for b in at.button if "romantic" in b.label).click().run()
     assert not at.exception and len(card_titles(at)) == 5
+
+
+def test_clicking_the_title_returns_to_the_start_and_keeps_the_key():
+    at = search(fresh(), "Wraith")
+    assert len(card_titles(at)) == 5
+    at.session_state["llm"] = lambda s, u: "OK"  # pretend the visitor pasted a working key
+    next(b for b in at.button if b.label.endswith("SymphonySearch")).click().run()
+    assert not at.exception and not card_titles(at)  # back to the welcome state
+    assert any("romantic" in b.label for b in at.button)
+    assert at.session_state["llm"] is not None  # the key survived

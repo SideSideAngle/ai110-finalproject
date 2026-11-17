@@ -1,13 +1,18 @@
 /* SymphonySearch look and feel. Loaded by app.py and injected as one <style> block. */
 
-/* 1. Gradient title */
-.stApp h1 {
-  text-align: center; font-size: 3.4rem; font-weight: 800; letter-spacing: -0.5px;
+/* 1. Gradient title. It is a button (class st-key-home) so clicking it goes home. */
+.st-key-home { display: flex; justify-content: center; }
+.st-key-home button {
+  background: none !important; border: none !important; box-shadow: none !important;
+  padding: 0.2rem 1rem !important;
+}
+.st-key-home button p {
+  font-size: 3.4rem; font-weight: 800; letter-spacing: -0.5px; line-height: 1.15;
   background: linear-gradient(90deg, #9D7BFF 0%, #C9A7FF 45%, #F2B84B 100%);
   -webkit-background-clip: text; background-clip: text;
   color: transparent; -webkit-text-fill-color: transparent;
-  padding-bottom: 0;
 }
+.st-key-home button:hover p { filter: brightness(1.2); }
 .hero-sub { text-align: center; color: #B9B3D9; margin: -0.4rem 0 1.4rem 0; font-size: 1.05rem; }
 
 /* 2. Song cards: rounded, soft violet border, lift and glow on hover */
@@ -50,3 +55,8 @@
 /* Welcome state */
 .welcome-step { text-align: center; color: #B9B3D9; padding: 0.6rem; }
 .welcome-step b { color: #F4F1FF; }
+
+/* Aligned button grids: every quick-start and example button fills its column equally */
+[class*="st-key-quick_"] button, [class*="st-key-example_"] button,
+.stFormSubmitButton > button { width: 100%; }
+[class*="st-key-example_"] button { min-height: 4.5rem; white-space: normal; line-height: 1.3; }
