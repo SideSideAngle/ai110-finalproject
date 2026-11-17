@@ -1,4 +1,4 @@
-# Apex Music Recommender: RAG-powered music picks by Legend and vibe
+# SymphonySearch: RAG-powered music picks by Legend and vibe
 
 ## Original project
 
@@ -6,7 +6,7 @@ This project extends my **Music Recommender Simulation** (Modules 1-3). The orig
 
 ## Title and summary
 
-**Apex Music Recommender** lets you type *"Wraith"*, *"I just lost a ranked match and I'm so tilted"*, or *"quiet music to study"* and get songs that fit, with the reasons.
+**SymphonySearch** lets you type *"Wraith"*, *"I just lost a ranked match and I'm so tilted"*, or *"quiet music to study"* and get songs that fit, with the reasons.
 
 Why it matters: the original could only answer to a profile a programmer typed in, from 19 songs. Now:
 

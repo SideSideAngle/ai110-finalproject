@@ -1,4 +1,4 @@
-"""Command line interface for the Apex Music Recommender.
+"""Command line interface for the SymphonySearch.
 
     python -m src.main                      # interactive prompt
     python -m src.main "calm focus music"   # one-shot request
@@ -73,7 +73,7 @@ def converse(app: App, text: str, k: int) -> Result:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Apex Music Recommender")
+    parser = argparse.ArgumentParser(description="SymphonySearch")
     parser.add_argument("request", nargs="*", help="what you want to hear (omit for interactive mode)")
     parser.add_argument("--offline", action="store_true", help="never call the LLM")
     parser.add_argument("-k", type=int, default=5, help="number of songs")

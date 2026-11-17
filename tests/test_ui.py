@@ -24,7 +24,7 @@ def search(at: AppTest, text: str) -> AppTest:
 def test_app_loads_without_errors():
     at = fresh()
     assert not at.exception
-    assert at.title[0].value.endswith("Apex Music Recommender")
+    assert at.title[0].value.endswith("SymphonySearch")
 
 
 def test_search_shows_five_song_cards():

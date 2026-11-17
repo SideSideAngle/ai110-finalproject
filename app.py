@@ -1,4 +1,4 @@
-"""Web interface for the Apex Music Recommender.  Run with:  streamlit run app.py
+"""Web interface for the SymphonySearch.  Run with:  streamlit run app.py
 
 Streamlit reruns this whole script on every click, so anything that must survive
 between clicks (the current result, the user's key) lives in st.session_state.
@@ -18,7 +18,7 @@ from src.ui_helpers import match_percent, youtube_search_url  # noqa: E402
 MAX_ROUNDS = 3  # how many "try again" rounds a visitor gets per search
 
 # Must be the first Streamlit call in the script.
-st.set_page_config(page_title="Apex Music Recommender", page_icon="🎧", layout="wide")
+st.set_page_config(page_title="SymphonySearch", page_icon="🎼", layout="wide")
 
 
 @st.cache_resource
@@ -93,7 +93,7 @@ with st.sidebar:
                "to disk or written to the logs.")
 
 # --------------------------------------------------------------------- page
-st.title("🎧 Apex Music Recommender")
+st.title("🎼 SymphonySearch")
 st.caption(f"{len(base.songs):,} songs · {len(base.kb.docs)} knowledge documents · "
            "pick a Legend or describe a vibe")
 
