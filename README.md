@@ -16,7 +16,7 @@ Why it matters: the original could only answer to a profile a programmer typed i
 
 ## Architecture overview
 
-Full diagram with the human and testing checkpoints: [docs/system_diagram.md](docs/system_diagram.md).
+Full diagram with the human and testing checkpoints: [diagrams/system_diagram.md](diagrams/system_diagram.md).
 
 1. **Guardrails** ([src/guardrails.py](src/guardrails.py)) clean and reject bad input.
 2. **Retriever** ([src/retriever.py](src/retriever.py)) finds the best-matching Legend or situation documents using TF-IDF. An exact Legend name scores 1.0.
@@ -67,6 +67,10 @@ python eval/run_eval.py                    # writes eval/report.md
 - 👎 **Not quite** asks what was off and tries again (up to 3 times, never repeating songs). 👍 logs a positive rating.
 - **Your own API key (optional):** paste an Anthropic key in the sidebar to switch from the offline rule-based parser to the LLM. The key is checked with one tiny call, kept only in your browser session's memory, and never written to disk or logs. Without a key everything still works offline.
 - **Privacy:** the web app does not store what you type (`LOG_REQUEST_TEXT=0` by default); it logs only ratings, confidence and parser info. Set `LOG_REQUEST_TEXT=1` to log text locally.
+
+### Seeing how it works (`explore.py`)
+
+`streamlit run explore.py` opens an interactive walkthrough that runs the real retriever, intent parser and scorer on any request you type, one tab per stage. The scoring tab has sliders for the weights, so you can watch the ranking change as you adjust them. It does not call an LLM; the last tab shows exactly what would be sent to one.
 
 ### Deploying (Streamlit Community Cloud)
 
