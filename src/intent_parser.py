@@ -42,7 +42,7 @@ CUES: Dict[str, Dict] = {
     "bright": {"valence": 0.8}, "acoustic": {"acousticness": 0.85},
     "electronic": {"acousticness": 0.05},
     # themes the knowledge base has no document for
-    "romanti|romance|date night|slow dance|in love|\\blove song|crush|valentine": {
+    "romantic|romance|date night|slow dance|in love|\\blove song|crush|valentine": {
         "genres": ["romance", "r&b", "soul"], "moods": ["relaxed", "chill", "happy"],
         "energy": 0.4, "valence": 0.6, "acousticness": 0.4},
     "heartbreak|heartbroken|breakup|break up|lonely": {

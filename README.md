@@ -2,7 +2,7 @@
 
 ## Original project
 
-This project extends my **Music Recommender Simulation** (Modules 1-3). The original was a content-based recommender: it loaded a hand-written 19-song CSV, compared each song to a hand-coded taste profile (favorite genre, favorite mood, target energy), and ranked songs by a points score (genre +2, mood +1, energy closeness up to +1). It printed a "Because: ..." line for every pick, but the user profile had to be written in code and genre and mood had to match exactly.
+This project extends my **Music Recommender Simulation**. The original was a content-based recommender: it loaded a hand-written 19-song CSV, compared each song to a hand-coded taste profile (favorite genre, favorite mood, target energy), and ranked songs by a points score (genre +2, mood +1, energy closeness up to +1). It printed a "Because: ..." line for every pick, but the user profile had to be written in code and genre and mood had to match exactly.
 
 ## Title and summary
 
@@ -153,7 +153,9 @@ None of the first round's songs are repeated. The trade-off is visible: the new 
 - **Previews come from the iTunes Search API, not a bundled audio file.** The dataset has no audio. It is free and keyless, but it only offers 30-second clips, matching is by name (so I require the artist and title to match closely and only accept Apple-hosted URLs), and it makes this the app's first outside network dependency. Every failure quietly falls back to the YouTube link, and lookups run in parallel and are cached.
 - **Every AI step has a non-AI fallback**, so the app and all tests run without an API key.
 - **Hand-written knowledge base.** Apex has no official public API, so I wrote 15 Legend and 8 situation descriptions at the personality level (not detailed lore, to avoid stating facts I can't verify). They are my interpretation, not official data.
-- **Simplifications:** no voice input, no audio playback, and one language.
+- **When retrieval finds nothing, offline mode is limited.** Retrieval is optional, not required: hand-written keyword cues ("romantic", "breakup", "party", "calm") can still build a profile on their own. But a request with no matching note *and* no cue word ("music for a rainy drive home") is not understood, and the app asks the user to rephrase. An LLM handles those requests much better, so adding an API key is the intended way to cover them. The offline path is a safety net, not a full substitute.
+- **Confidence and weights are judgment calls, not tuned values.** Confidence estimates how likely the parsed profile matches what the user meant (rules: retrieval score plus cue hits; LLM: `0.6 x the LLM's own rating + 0.4 x retrieval score`). It is a heuristic that has not been calibrated against real ratings; the thumbs up/down data is logged but too small to use for that yet. The scoring weights (genre 2.0, mood 1.0, energy 1.0, valence 0.5, acousticness 0.5) are likewise my choices, and the failing conflicting-profile case above shows their cost.
+- **Simplifications:** no voice input, only 30-second previews instead of full playback, and one language.
 
 ## Testing summary
 
@@ -173,9 +175,8 @@ None of the first round's songs are repeated. The trade-off is visible: the new 
 
 ## Reflection
 
-*(Replace this with your own words before submitting; the points below are what I observed building it.)*
-
 - Putting an LLM in front of a deterministic scorer made the system far easier to trust and test than letting the LLM pick songs itself.
 - Most of the reliability work was not about the AI being smart. It was about handling what happens when it is wrong, missing, or fed odd input.
 - Evaluation cases found real weaknesses (the weights, noisy genres, the derived mood) that I would not have noticed from the happy path.
-- The knowledge base and the mood derivation are my own judgments, so the system's "taste" reflects my assumptions about what a Legend sounds like.
+- The knowledge base and the mood derivation are my own judgments, so the system's "taste" reflects my assumptions about what a Legend sounds like. Can be worked to be made better with community and user help. 
+- The AI likes to cover many bases even if those bases may be unnessessary. A mode which doesn't use an API key to call an LLM is interesting and useful but not too much in the context of this project and in modern use applications. While I initially found it a little redundant, it became a safety net for when the LLM mode would fail and it was interesting to see how it works. 
